@@ -1,4 +1,5 @@
-# Crypto or No Crypto
+# Coinwise Academy
+An app for learning about crytocurrency and coin trading with a mock trading simulator for practice.
 
 ## Project structure
 
