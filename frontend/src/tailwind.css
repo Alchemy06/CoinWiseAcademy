@@ -1,0 +1,4 @@
+/* Tailwind utility classes — imported before styles.css so project-specific rules always win. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

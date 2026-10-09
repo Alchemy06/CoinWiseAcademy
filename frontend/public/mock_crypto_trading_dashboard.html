@@ -1,0 +1,988 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap');
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0
+  }
+
+  :root {
+    --bg: #0a0c10;
+    --bg2: #111318;
+    --bg3: #181b22;
+    --bg4: #1e2229;
+    --border: #2a2f3a;
+    --border2: #3a4050;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --dim: #4a5568;
+    --green: #00d97e;
+    --green2: #00a85e;
+    --red: #ff4d6d;
+    --red2: #cc2244;
+    --amber: #f59e0b;
+    --blue: #3b82f6;
+    --cyan: #06b6d4;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Space Grotesk', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    min-height: 600px
+  }
+
+  .dashboard {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    grid-template-rows: auto 1fr auto;
+    gap: 0;
+    height: 100vh;
+    min-height: 600px
+  }
+
+  .header {
+    grid-column: 1/-1;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--green);
+    letter-spacing: 2px
+  }
+
+  .ticker-bar {
+    display: flex;
+    gap: 16px;
+    overflow: hidden;
+    flex: 1
+  }
+
+  .ticker-item {
+    font-family: var(--mono);
+    font-size: 11px;
+    white-space: nowrap;
+    display: flex;
+    gap: 6px;
+    align-items: center
+  }
+
+  .ticker-item .sym {
+    color: var(--muted)
+  }
+
+  .ticker-item .price {
+    color: var(--text);
+    font-weight: 500
+  }
+
+  .ticker-item .chg {
+    font-size: 10px
+  }
+
+  .up {
+    color: var(--green)
+  }
+
+  .dn {
+    color: var(--red)
+  }
+
+  .main-chart {
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px
+  }
+
+  .chart-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap
+  }
+
+  .chart-title {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text)
+  }
+
+  .chart-price {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--green)
+  }
+
+  .chart-change {
+    font-family: var(--mono);
+    font-size: 11px
+  }
+
+  .time-btns {
+    display: flex;
+    gap: 4px;
+    margin-left: auto
+  }
+
+  .time-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all .15s
+  }
+
+  .time-btn:hover,
+  .time-btn.active {
+    background: var(--green);
+    color: #000;
+    border-color: var(--green)
+  }
+
+  #chartCanvas {
+    width: 100%;
+    flex: 1;
+    min-height: 200px;
+    cursor: crosshair
+  }
+
+  .tooltip-box {
+    position: absolute;
+    background: var(--bg4);
+    border: 1px solid var(--border2);
+    padding: 6px 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    pointer-events: none;
+    display: none;
+    z-index: 99;
+    border-radius: 4px
+  }
+
+  .metrics-row {
+    display: flex;
+    gap: 8px
+  }
+
+  .metric {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px
+  }
+
+  .metric-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 4px;
+    font-family: var(--mono)
+  }
+
+  .metric-val {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600
+  }
+
+  .positions-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 2px
+  }
+
+  .pos-card {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    min-width: 0
+  }
+
+  .pos-sym {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--cyan);
+    font-weight: 600;
+    white-space: nowrap
+  }
+
+  .pos-info {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted)
+  }
+
+  .pos-pnl {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: auto;
+    white-space: nowrap
+  }
+
+  .sidebar {
+    background: var(--bg2);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow-y: auto
+  }
+
+  .side-section {
+    padding: 12px;
+    border-bottom: 1px solid var(--border)
+  }
+
+  .side-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    font-family: var(--mono);
+    margin-bottom: 8px
+  }
+
+  .coin-btn-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px
+  }
+
+  .coin-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all .15s;
+    text-align: center
+  }
+
+  .coin-btn:hover {
+    border-color: var(--cyan);
+    color: var(--cyan)
+  }
+
+  .coin-btn.selected {
+    background: var(--cyan);
+    color: #000;
+    border-color: var(--cyan);
+    font-weight: 600
+  }
+
+  .trade-input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 7px 10px;
+    border-radius: 4px;
+    outline: none;
+    transition: border .15s
+  }
+
+  .trade-input:focus {
+    border-color: var(--cyan)
+  }
+
+  select.trade-input option {
+    background: var(--bg3)
+  }
+
+  .buy-btn,
+  .sell-btn {
+    width: 100%;
+    padding: 9px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 4px;
+    border: none;
+    transition: all .15s;
+    letter-spacing: .5px
+  }
+
+  .buy-btn {
+    background: var(--green);
+    color: #000;
+    margin-bottom: 4px
+  }
+
+  .buy-btn:hover {
+    background: var(--green2)
+  }
+
+  .buy-btn:active {
+    transform: scale(.98)
+  }
+
+  .sell-btn {
+    background: var(--red);
+    color: #fff
+  }
+
+  .sell-btn:hover {
+    background: var(--red2)
+  }
+
+  .sell-btn:active {
+    transform: scale(.98)
+  }
+
+  .live-price-box {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 10px
+  }
+
+  .live-label {
+    font-size: 9px;
+    color: var(--muted);
+    font-family: var(--mono);
+    letter-spacing: .8px;
+    text-transform: uppercase
+  }
+
+  .live-val {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--green);
+    line-height: 1.2
+  }
+
+  .live-sym {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--mono)
+  }
+
+  .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    margin-right: 5px;
+    animation: pulse 1.5s infinite
+  }
+
+  @keyframes pulse {
+
+    0%,
+    100% {
+      opacity: 1
+    }
+
+    50% {
+      opacity: .3
+    }
+  }
+
+  .pnl-select {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 8px;
+    border-radius: 4px;
+    outline: none;
+    margin-bottom: 8px
+  }
+
+  .pnl-table {
+    width: 100%
+  }
+
+  .pnl-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px
+  }
+
+  .pnl-row:last-child {
+    border-bottom: none
+  }
+
+  .status-msg {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 5px 8px;
+    border-radius: 3px;
+    margin-top: 6px;
+    display: none
+  }
+
+  .status-ok {
+    background: #00d97e22;
+    color: var(--green);
+    border: 1px solid var(--green2);
+    display: block
+  }
+
+  .status-err {
+    background: #ff4d6d22;
+    color: var(--red);
+    border: 1px solid var(--red2);
+    display: block
+  }
+
+  .bottom-panel {
+    grid-column: 1/-1;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 6px 12px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    overflow-x: auto
+  }
+
+  .trade-hist-item {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    white-space: nowrap;
+    display: flex;
+    gap: 6px
+  }
+
+  .trade-hist-item .h-side {
+    font-weight: 600
+  }
+
+  .chart-wrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column
+  }
+
+  .input-gap {
+    margin-top: 5px
+  }
+</style>
+
+<h2 class="sr-only">CWA mock trading</h2>
+
+<div class="dashboard" id="app">
+  <div class="header">
+    <div class="logo">CWA</div>
+    <div class="ticker-bar" id="tickerBar"></div>
+  </div>
+
+  <div class="main-chart">
+    <div class="chart-header">
+      <span class="chart-title" id="chartTitle">BTC/USD</span>
+      <span class="chart-price" id="chartCurrentPrice">—</span>
+      <span class="chart-change" id="chartChange"></span>
+      <div class="time-btns">
+        <button class="time-btn active" onclick="setDays(1,this)">1D</button>
+        <button class="time-btn" onclick="setDays(7,this)">1W</button>
+        <button class="time-btn" onclick="setDays(30,this)">1M</button>
+        <button class="time-btn" onclick="setDays(90,this)">3M</button>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="chartCanvas"></canvas>
+      <div class="tooltip-box" id="tooltip"></div>
+    </div>
+    <div class="metrics-row">
+      <div class="metric">
+        <div class="metric-label">Cash Balance</div>
+        <div class="metric-val" id="cashBal">$10,000.00</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Holdings Value</div>
+        <div class="metric-val" id="holdVal">$0.00</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Net Worth</div>
+        <div class="metric-val" id="netWorth">$10,000.00</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">All-Time P&L</div>
+        <div class="metric-val" id="pnlTotal">0.00%</div>
+      </div>
+    </div>
+    <div class="positions-row" id="positionsRow"></div>
+  </div>
+
+  <div class="sidebar">
+    <div class="side-section">
+      <div class="side-label">Select Chart Coin</div>
+      <div class="coin-btn-grid" id="coinBtns"></div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-label">Trade</div>
+      <input type="number" class="trade-input" id="tradeAmount" placeholder="Amount in USD" min="0" step="0.01">
+      <div class="input-gap"></div>
+      <select class="trade-input" id="tradeCoin" style="margin-top:5px"></select>
+      <div style="display:grid;gap:4px;margin-top:8px">
+        <button class="buy-btn" onclick="executeTrade('BUY')">▲ BUY</button>
+        <button class="sell-btn" onclick="executeTrade('SELL')">▼ SELL</button>
+      </div>
+      <div class="status-msg" id="statusMsg"></div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-label">Live Price</div>
+      <div class="live-price-box">
+        <div class="live-label"><span class="dot"></span>BINANCE WS</div>
+        <div class="live-val" id="livePrice">—</div>
+        <div class="live-sym" id="liveSym">Select a coin</div>
+      </div>
+    </div>
+
+    <div class="side-section" style="flex:1">
+      <div class="side-label">Position P&amp;L</div>
+      <select class="pnl-select" id="pnlCoin" onchange="renderPnlTable()"></select>
+      <div id="pnlTable"></div>
+    </div>
+  </div>
+
+  <div class="bottom-panel" id="bottomPanel">
+    <span style="font-family:var(--mono);font-size:10px;color:var(--dim)">RECENT TRADES</span>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--dim)" id="noTrades">No trades yet</span>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+  const BASE = '';
+  const COINS = ['BTC', 'ETH', 'SOL', 'BNB', 'ADA', 'XRP', 'DOGE', 'DOT'];
+  const BINANCE_MAP = { BTC: 'btcusdt', ETH: 'ethusdt', SOL: 'solusdt', BNB: 'bnbusdt', ADA: 'adausdt', XRP: 'xrpusdt', DOGE: 'dogeusdt', DOT: 'dotusdt' };
+  let portfolio = { cash_balance: 10000, holdings_value: 0, total_equity: 10000, all_time_return_pct: 0, positions: [] };
+  let livePrices = {};
+  let selectedCoin = 'BTC';
+  let chartDays = 1;
+  let chartInst = null;
+  let chartData = [];
+  let wsConn = null;
+  let tradeHistory = [];
+  let authToken = null;
+
+  function fmt(n, d = 2) { return Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+  function fmtUSD(n) { return '$' + fmt(n, 2); }
+  function fmtPct(n) { return (n >= 0 ? '+' : '') + fmt(n, 2) + '%'; }
+
+  function buildCoinBtns() {
+    const g = document.getElementById('coinBtns');
+    g.innerHTML = '';
+    COINS.forEach(c => {
+      const b = document.createElement('button');
+      b.className = 'coin-btn' + (c === selectedCoin ? ' selected' : '');
+      b.textContent = c;
+      b.onclick = () => selectChartCoin(c);
+      g.appendChild(b);
+    });
+  }
+  function buildCoinSelects() {
+    ['tradeCoin', 'pnlCoin'].forEach(id => {
+      const s = document.getElementById(id);
+      s.innerHTML = '';
+      COINS.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c; o.textContent = c;
+        s.appendChild(o);
+      });
+    });
+  }
+
+  async function fetchLivePrices() {
+    try {
+      const r = await fetch(BASE + '/api/prices/live/');
+      if (!r.ok) throw new Error();
+      const data = await r.json();
+      data.forEach(d => { livePrices[d.ticker] = { price: parseFloat(d.current_price), change: parseFloat(d.price_change_24h) }; });
+      renderTickerBar();
+      updateLivePriceBox();
+      renderPortfolioMetrics();
+    } catch (e) {
+      COINS.forEach(c => { if (!livePrices[c]) { livePrices[c] = { price: getSimPrice(c), change: (Math.random() - 0.5) * 5 }; } });
+      renderTickerBar();
+      updateLivePriceBox();
+    }
+  }
+
+  function getSimPrice(c) {
+    const base = { BTC: 65000, ETH: 3200, SOL: 160, BNB: 580, ADA: 0.45, XRP: 0.52, DOGE: 0.12, DOT: 7 };
+    return base[c] || 100;
+  }
+
+  function renderTickerBar() {
+    const bar = document.getElementById('tickerBar');
+    bar.innerHTML = '';
+    COINS.forEach(c => {
+      const lp = livePrices[c]; if (!lp) return;
+      const el = document.createElement('div');
+      el.className = 'ticker-item';
+      const cls = lp.change >= 0 ? 'up' : 'dn';
+      el.innerHTML = `<span class="sym">${c}</span><span class="price">$${fmt(lp.price, lp.price < 1 ? 4 : 2)}</span><span class="chg ${cls}">${fmtPct(lp.change)}</span>`;
+      bar.appendChild(el);
+    });
+  }
+
+  async function fetchChartData(coin, days) {
+    try {
+      const r = await fetch(BASE + `/api/chart/${coin}/?days=${days}`);
+      if (!r.ok) throw new Error();
+      const data = await r.json();
+      if (data && data.length > 0) { chartData = data; drawChart(data, coin); return; }
+    } catch (e) { }
+    const sim = generateSimChart(coin, days);
+    chartData = sim; drawChart(sim, coin);
+  }
+
+  function generateSimChart(coin, days) {
+    const now = Math.floor(Date.now() / 1000);
+    const pts = Math.min(days * 24, 200);
+    const step = Math.floor(days * 86400 / pts);
+    const base = livePrices[coin] ? livePrices[coin].price : getSimPrice(coin);
+    let price = base * (1 - (Math.random() * 0.15));
+    const arr = [];
+    for (let i = 0; i < pts; i++) {
+      const t = now - (pts - i) * step;
+      const chg = (Math.random() - 0.48) * base * 0.02;
+      price = Math.max(price + chg, base * 0.5);
+      arr.push({ time: t, open: price, high: price * (1 + Math.random() * 0.005), low: price * (1 - Math.random() * 0.005), close: price, volume: Math.random() * 100 });
+    }
+    return arr;
+  }
+
+  function drawChart(data, coin) {
+    const canvas = document.getElementById('chartCanvas');
+    const ctx = canvas.getContext('2d');
+    const lp = livePrices[coin];
+    const closes = data.map(d => parseFloat(d.close));
+    const labels = data.map(d => {
+      const dt = new Date(d.time * 1000);
+      if (chartDays <= 1) return dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return dt.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    });
+    const first = closes[0]; const last = closes[closes.length - 1];
+    const rising = last >= first;
+    const color = rising ? '#00d97e' : '#ff4d6d';
+    const colorAlpha = rising ? 'rgba(0,217,126,0.15)' : 'rgba(255,77,109,0.15)';
+
+    if (chartInst) chartInst.destroy();
+    const min = Math.min(...closes) * 0.998;
+    const max = Math.max(...closes) * 1.002;
+
+    chartInst = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          data: closes,
+          borderColor: color,
+          backgroundColor: (ctx2) => {
+            const g = ctx2.chart.ctx.createLinearGradient(0, 0, 0, ctx2.chart.height);
+            g.addColorStop(0, colorAlpha); g.addColorStop(1, 'rgba(0,0,0,0)');
+            return g;
+          },
+          borderWidth: 1.5,
+          fill: true,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHoverBackgroundColor: color,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 400 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            enabled: false,
+            external: (ctx2) => {
+              const tip = document.getElementById('tooltip');
+              const model = ctx2.tooltip;
+              if (model.opacity === 0) { tip.style.display = 'none'; return; }
+              const dp = model.dataPoints[0];
+              const price = dp.raw;
+              const label = dp.label;
+              tip.style.display = 'block';
+              tip.innerHTML = `<span style="color:var(--muted)">${label}</span><br><span style="color:${color};font-weight:600">$${fmt(price, price < 1 ? 4 : 2)}</span>`;
+              const rect = canvas.getBoundingClientRect();
+              const x = model.caretX; const y = model.caretY;
+              tip.style.left = (x + 12) + 'px';
+              tip.style.top = Math.max(0, y - 20) + 'px';
+            }
+          }
+        },
+        scales: {
+          x: { display: true, ticks: { color: '#4a5568', font: { family: 'IBM Plex Mono', size: 9 }, maxTicksLimit: 6 }, grid: { color: 'rgba(42,47,58,0.5)', lineWidth: .5 } },
+          y: { display: true, position: 'right', min, max, ticks: { color: '#4a5568', font: { family: 'IBM Plex Mono', size: 9 }, callback: v => '$' + fmt(v, v < 1 ? 4 : 0) }, grid: { color: 'rgba(42,47,58,0.5)', lineWidth: .5 } }
+        }
+      }
+    });
+
+    document.getElementById('chartTitle').textContent = coin + '/USD';
+    if (lp) {
+      document.getElementById('chartCurrentPrice').textContent = '$' + fmt(lp.price, lp.price < 1 ? 4 : 2);
+      const cls = lp.change >= 0 ? 'up' : 'dn';
+      document.getElementById('chartChange').className = 'chart-change ' + cls;
+      document.getElementById('chartChange').textContent = fmtPct(lp.change) + ' (24h)';
+    }
+  }
+
+  function setDays(d, el) {
+    chartDays = d;
+    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    fetchChartData(selectedCoin, d);
+  }
+
+  function selectChartCoin(coin) {
+    selectedCoin = coin;
+    buildCoinBtns();
+    fetchChartData(coin, chartDays);
+    connectBinanceWS(coin);
+    updateLivePriceBox();
+  }
+
+  function connectBinanceWS(coin) {
+    if (wsConn) { try { wsConn.close(); } catch (e) { } }
+    const sym = BINANCE_MAP[coin];
+    if (!sym) return;
+    try {
+      wsConn = new WebSocket(`wss://stream.binance.com:9443/ws/${sym}@trade`);
+      wsConn.onmessage = (e) => {
+        try {
+          const d = JSON.parse(e.data);
+          const price = parseFloat(d.p);
+          if (!isNaN(price)) {
+            const prev = livePrices[coin] ? livePrices[coin].price : price;
+            if (!livePrices[coin]) livePrices[coin] = { price, change: 0 };
+            livePrices[coin].price = price;
+            const lv = document.getElementById('livePrice');
+            lv.style.color = price >= prev ? 'var(--green)' : 'var(--red)';
+            lv.textContent = '$' + fmt(price, price < 1 ? 5 : 2);
+            document.getElementById('chartCurrentPrice').textContent = '$' + fmt(price, price < 1 ? 4 : 2);
+            renderTickerBar();
+            renderPortfolioMetrics();
+          }
+        } catch (err) { }
+      };
+      wsConn.onerror = () => { };
+    } catch (e) { }
+  }
+
+  function updateLivePriceBox() {
+    document.getElementById('liveSym').textContent = selectedCoin + '/USDT · Binance';
+    const lp = livePrices[selectedCoin];
+    if (lp) document.getElementById('livePrice').textContent = '$' + fmt(lp.price, lp.price < 1 ? 5 : 2);
+  }
+
+  async function fetchPortfolio() {
+    try {
+      const headers = authToken ? { Authorization: 'Bearer ' + authToken } : {};
+      const r = await fetch(BASE + '/api/portfolio/', { headers });
+      if (!r.ok) throw new Error();
+      const data = await r.json();
+      portfolio.cash_balance = parseFloat(data.cash_balance);
+      portfolio.holdings_value = parseFloat(data.holdings_value || 0);
+      portfolio.total_equity = parseFloat(data.total_equity);
+      portfolio.all_time_return_pct = parseFloat(data.all_time_return_pct || 0);
+      portfolio.positions = data.positions || [];
+      renderPortfolioMetrics();
+      renderPositions();
+      renderPnlTable();
+    } catch (e) { renderPortfolioMetrics(); }
+  }
+
+  function renderPortfolioMetrics() {
+    const hv = portfolio.positions.reduce((sum, p) => {
+      const lp = livePrices[p.asset_ticker];
+      return sum + (lp ? lp.price * parseFloat(p.quantity) : parseFloat(p.current_value || 0));
+    }, 0);
+    const ne = portfolio.cash_balance + hv;
+    const ret = ((ne - 10000) / 10000) * 100;
+    document.getElementById('cashBal').textContent = fmtUSD(portfolio.cash_balance);
+    document.getElementById('holdVal').textContent = fmtUSD(hv);
+    document.getElementById('netWorth').textContent = fmtUSD(ne);
+    const pnlEl = document.getElementById('pnlTotal');
+    pnlEl.textContent = fmtPct(ret);
+    pnlEl.style.color = ret >= 0 ? 'var(--green)' : 'var(--red)';
+  }
+
+  function renderPositions() {
+    const row = document.getElementById('positionsRow');
+    if (!portfolio.positions.length) { row.innerHTML = ''; return; }
+    row.innerHTML = portfolio.positions.map(p => {
+      const lp = livePrices[p.asset_ticker];
+      const cv = lp ? lp.price * parseFloat(p.quantity) : parseFloat(p.current_value || 0);
+      const cost = parseFloat(p.cost_basis || p.avg_buy_price * parseFloat(p.quantity));
+      const pnl = cv - cost;
+      const pct = cost > 0 ? ((pnl / cost) * 100) : 0;
+      const cls = pnl >= 0 ? 'up' : 'dn';
+      return `<div class="pos-card"><span class="pos-sym">${p.asset_ticker}</span><span class="pos-info">${fmt(parseFloat(p.quantity), 4)} @ $${fmt(parseFloat(p.avg_buy_price), 2)}</span><span class="pos-pnl ${cls}">${fmtPct(pct)}</span></div>`;
+    }).join('');
+  }
+
+  function renderPnlTable() {
+    const coin = document.getElementById('pnlCoin').value;
+    const tbl = document.getElementById('pnlTable');
+    const pos = portfolio.positions.find(p => p.asset_ticker === coin);
+    if (!pos) { tbl.innerHTML = '<div style="font-family:var(--mono);font-size:11px;color:var(--dim)">No position</div>'; return; }
+    const lp = livePrices[coin];
+    const qty = parseFloat(pos.quantity);
+    const avg = parseFloat(pos.avg_buy_price);
+    const cur = lp ? lp.price : parseFloat(pos.current_price || avg);
+    const cv = cur * qty;
+    const cost = avg * qty;
+    const pnl = cv - cost;
+    const pct = cost > 0 ? ((pnl / cost) * 100) : 0;
+    const cls = pnl >= 0 ? 'up' : 'dn';
+    tbl.innerHTML = `<div class="pnl-row"><span style="color:var(--muted)">Qty</span><span style="color:var(--text)">${fmt(qty, 6)}</span></div>
+<div class="pnl-row"><span style="color:var(--muted)">Avg Price</span><span>$${fmt(avg, 2)}</span></div>
+<div class="pnl-row"><span style="color:var(--muted)">Cur Price</span><span>$${fmt(cur, cur < 1 ? 4 : 2)}</span></div>
+<div class="pnl-row"><span style="color:var(--muted)">Value</span><span>$${fmt(cv, 2)}</span></div>
+<div class="pnl-row"><span style="color:var(--muted)">Unreal P&L</span><span class="${cls}">${pnl >= 0 ? '+' : ''}$${fmt(pnl, 2)} (${fmtPct(pct)})</span></div>`;
+  }
+
+  async function executeTrade(side) {
+    const amtUSD = parseFloat(document.getElementById('tradeAmount').value);
+    const coin = document.getElementById('tradeCoin').value;
+    const msg = document.getElementById('statusMsg');
+    if (!amtUSD || amtUSD <= 0) { showStatus('Enter a valid USD amount', 'err'); return; }
+    const lp = livePrices[coin];
+    const price = lp ? lp.price : getSimPrice(coin);
+    if (price <= 0) { showStatus('Price unavailable', 'err'); return; }
+    const qty = (amtUSD / price).toFixed(8);
+
+    if (!authToken) {
+      simulateTrade(side, coin, qty, price, amtUSD); return;
+    }
+    try {
+      const r = await fetch(BASE + '/api/trade/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({ ticker: coin, quantity: qty, side })
+      });
+      const data = await r.json();
+      if (!r.ok) { showStatus(data.error || 'Trade failed', 'err'); return; }
+      portfolio.cash_balance = parseFloat(data.portfolio.cash_balance);
+      portfolio.positions = data.portfolio.positions || [];
+      portfolio.holdings_value = parseFloat(data.portfolio.holdings_value || 0);
+      portfolio.total_equity = parseFloat(data.portfolio.total_equity);
+      showStatus(`${side} ${qty} ${coin} @ $${fmt(price, 2)}`, 'ok');
+      addTradeHistory(side, coin, qty, price);
+      renderPortfolioMetrics(); renderPositions(); renderPnlTable();
+    } catch (e) { simulateTrade(side, coin, qty, price, amtUSD); }
+  }
+
+  function simulateTrade(side, coin, qty, price, amtUSD) {
+    if (side === 'BUY') {
+      if (amtUSD > portfolio.cash_balance) { showStatus(`Need $${fmt(amtUSD, 2)} but have $${fmt(portfolio.cash_balance, 2)}`, 'err'); return; }
+      portfolio.cash_balance -= amtUSD;
+      const pos = portfolio.positions.find(p => p.asset_ticker === coin);
+      if (pos) {
+        const oldQty = parseFloat(pos.quantity); const oldAvg = parseFloat(pos.avg_buy_price);
+        const newQty = oldQty + parseFloat(qty);
+        pos.avg_buy_price = ((oldQty * oldAvg + amtUSD) / newQty).toFixed(8);
+        pos.quantity = newQty.toFixed(8);
+      } else {
+        portfolio.positions.push({ asset_ticker: coin, asset_name: coin, quantity: parseFloat(qty).toFixed(8), avg_buy_price: price.toFixed(8), current_price: price.toFixed(8), current_value: amtUSD, cost_basis: amtUSD, unrealised_pnl: 0, unrealised_pnl_pct: 0, portfolio_pct: 0 });
+      }
+      showStatus(`BUY ${parseFloat(qty).toFixed(6)} ${coin} @ $${fmt(price, 2)}`, 'ok');
+    } else {
+      const pos = portfolio.positions.find(p => p.asset_ticker === coin);
+      const qtyF = parseFloat(qty);
+      if (!pos || parseFloat(pos.quantity) < qtyF) { showStatus(`Insufficient ${coin} holdings`, 'err'); return; }
+      portfolio.cash_balance += amtUSD;
+      pos.quantity = (parseFloat(pos.quantity) - qtyF).toFixed(8);
+      if (parseFloat(pos.quantity) <= 0) portfolio.positions = portfolio.positions.filter(p => p.asset_ticker !== coin);
+      showStatus(`SELL ${qtyF.toFixed(6)} ${coin} @ $${fmt(price, 2)}`, 'ok');
+    }
+    addTradeHistory(side, coin, qty, price);
+    renderPortfolioMetrics(); renderPositions(); renderPnlTable();
+  }
+
+  function showStatus(msg, type) {
+    const el = document.getElementById('statusMsg');
+    el.textContent = msg;
+    el.className = 'status-msg ' + (type === 'ok' ? 'status-ok' : 'status-err');
+    setTimeout(() => { el.className = 'status-msg'; }, 4000);
+  }
+
+  function addTradeHistory(side, coin, qty, price) {
+    tradeHistory.unshift({ side, coin, qty, price, time: new Date() });
+    if (tradeHistory.length > 20) tradeHistory.pop();
+    renderTradeHistory();
+  }
+
+  function renderTradeHistory() {
+    const panel = document.getElementById('bottomPanel');
+    const no = document.getElementById('noTrades');
+    if (tradeHistory.length > 0 && no) no.style.display = 'none';
+    const items = panel.querySelectorAll('.trade-hist-item');
+    items.forEach(i => i.remove());
+    tradeHistory.slice(0, 8).forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'trade-hist-item';
+      const cls = t.side === 'BUY' ? 'up' : 'dn';
+      div.innerHTML = `<span class="h-side ${cls}">${t.side}</span><span>${t.coin}</span><span>${parseFloat(t.qty).toFixed(4)}</span><span>@$${fmt(t.price, t.price < 1 ? 4 : 2)}</span><span style="color:var(--dim)">${t.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>`;
+      panel.appendChild(div);
+    });
+  }
+
+  async function init() {
+    buildCoinBtns();
+    buildCoinSelects();
+    await fetchLivePrices();
+    await fetchChartData(selectedCoin, chartDays);
+    connectBinanceWS(selectedCoin);
+    await fetchPortfolio();
+    setInterval(fetchLivePrices, 15000);
+    setInterval(() => { renderPortfolioMetrics(); renderPositions(); renderPnlTable(); }, 3000);
+  }
+
+  init();
+</script>
